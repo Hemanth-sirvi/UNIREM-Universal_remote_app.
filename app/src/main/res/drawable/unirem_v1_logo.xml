@@ -1,0 +1,53 @@
+<!--
+  ~ Copyright (C) 2026 The Android Open Source Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="2100dp"
+    android:height="2970dp"
+    android:viewportWidth="210"
+    android:viewportHeight="290">
+  <path
+      android:pathData="M40.29,137.98a66.67,68.1 0,1 0,133.35 0a66.67,68.1 0,1 0,-133.35 0z"
+      android:strokeWidth="1.264583"
+      android:fillColor="#606060"/>
+  <path
+      android:pathData="M48.13,137.98a58.47,58.12 0,1 0,116.95 0a58.47,58.12 0,1 0,-116.95 0z"
+      android:strokeWidth="0.47289"
+      android:fillColor="#3b3b3b"/>
+  <path
+      android:pathData="M64.53,138.16a42.07,42.61 0,1 0,84.14 0a42.07,42.61 0,1 0,-84.14 0z"
+      android:strokeWidth="0.347156"
+      android:fillColor="#606060"/>
+  <path
+      android:pathData="M98.05,78.44V103.4H114.81V78.44Z"
+      android:strokeWidth="0.264583"
+      android:fillColor="#606060"/>
+  <path
+      android:pathData="M97.59,174.95L97.59,199.91L114.34,199.91L114.34,174.95Z"
+      android:strokeWidth="0.264583"
+      android:fillColor="#606060"/>
+  <path
+      android:pathData="M145.94,129.04L145.94,147.93L165.55,147.93L165.55,129.04Z"
+      android:strokeWidth="0.25"
+      android:fillColor="#606060"/>
+  <path
+      android:pathData="M47.25,130.43L47.25,149.32L66.86,149.32L66.86,130.43Z"
+      android:strokeWidth="0.25"
+      android:fillColor="#606060"/>
+  <path
+      android:pathData="M111.95,198.77a4.81,1.6 0,1 0,9.63 0a4.81,1.6 0,1 0,-9.63 0z"
+      android:strokeWidth="0.264583"
+      android:fillColor="#606060"/>
+</vector>
