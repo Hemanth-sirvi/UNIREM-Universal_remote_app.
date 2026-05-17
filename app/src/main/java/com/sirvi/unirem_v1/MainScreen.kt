@@ -1,38 +1,26 @@
 package com.sirvi.unirem_v1
 
-
-import android.graphics.Rect
-import android.health.connect.datatypes.units.Power
-import android.widget.GridLayout
-import android.widget.Space
-import android.widget.ToggleButton
+import android.app.Activity
+import android.view.Display
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -43,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ModifierInfo
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -57,7 +47,10 @@ import androidx.compose.ui.unit.sp
 fun MainScreen(text : String = "nope", modifier: Modifier) {
     var temp:Int by remember { mutableIntStateOf(24) }
     var isPowerON: Boolean by remember { mutableStateOf(false) }
-    var tempText = if(isPowerON) "$temp 'C" else " --'C"
+    val tempText = if(isPowerON) "$temp 'C" else " --'C"
+    var isSwingON: Boolean by remember { mutableStateOf(false)}
+    var selectedMode: Int by remember { mutableIntStateOf(0) }
+    var timerMode: Int by remember { mutableIntStateOf(0)}
     Column(modifier = modifier.padding(10.dp).fillMaxSize()
         //.background(Color.Blue)
         .padding(10.dp),
@@ -69,7 +62,10 @@ fun MainScreen(text : String = "nope", modifier: Modifier) {
         Spacer(modifier.fillMaxSize(0.2f))
         ButtonLayout(modifier = Modifier.weight(1f).fillMaxSize(),
             isPowerON = isPowerON, onPowerPressed = {isPowerON = it},
-            tempValue = temp, onTemperatureChangePressed = {temp = it}
+            tempValue = temp, onTemperatureChangePressed = {temp = it},
+            isSwingON = isSwingON, onSwingPressed = {isSwingON = it},
+            selectedMode = selectedMode, onModeChange = {selectedMode  = it},
+            timerMode = timerMode, onTimerModeChange = {timerMode = it}
         )
     }
 
@@ -121,6 +117,9 @@ fun TemperatureScreen(temp : String, modifier: Modifier){
 fun ButtonLayout(modifier: Modifier,
                  isPowerON: Boolean, onPowerPressed: (Boolean) -> Unit,
                  tempValue:Int, onTemperatureChangePressed:(Int) -> Unit,
+                 isSwingON: Boolean, onSwingPressed:(Boolean) -> Unit,
+                 selectedMode: Int, onModeChange: (Int) -> Unit,
+                 timerMode: Int, onTimerModeChange: (Int) -> Unit,
     ){
     Box(modifier= Modifier){
         Row() {
@@ -133,15 +132,15 @@ fun ButtonLayout(modifier: Modifier,
             Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 TemperatureButton(modifier = Modifier.weight(1f).fillMaxSize(),tempvalue = tempValue, onTemperatureChangePressed = onTemperatureChangePressed,isPowerON =isPowerON)
                 Spacer(modifier = Modifier.height(10.dp))
-                ButtonItem(text = "Mode", modifier = Modifier.weight(1f).fillMaxSize())
+                ModeButton(modifier = Modifier.weight(1f).fillMaxSize(),selectedMode = selectedMode, onModeChange = onModeChange)
             }
             Spacer(modifier= Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                ButtonItem(text = "Swing", modifier = Modifier.weight(1f).fillMaxSize())
+                SwingButton(modifier = Modifier.weight(1f).fillMaxSize(), isSwingON = isSwingON, onSwingPressed = onSwingPressed)
                 Spacer(modifier = Modifier.height(10.dp))
-                ButtonItem(text = "Timer", modifier = Modifier.weight(1f).fillMaxSize())
+                TimerButton(modifier = Modifier.weight(1f).fillMaxSize(), timerMode = timerMode, onTimerModeChange = onTimerModeChange)
                 Spacer(modifier = Modifier.height(10.dp))
-                ButtonItem(text = "Exit", modifier = Modifier.weight(1f).fillMaxSize())
+                ExitButton(modifier = Modifier.weight(1f).fillMaxSize())
 
             }
         }
@@ -289,4 +288,193 @@ fun TemperatureButton(
         }
     }
 
+}
+
+@Composable
+fun SwingButton(modifier: Modifier, isSwingON: Boolean  = false, onSwingPressed: (Boolean) -> Unit){
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(10.dp),
+        onClick = {
+            onSwingPressed(!isSwingON)
+        }
+    ) {
+
+        Box(
+            modifier = Modifier.background(Color.White).fillMaxSize(),
+            contentAlignment = Alignment.Center,
+
+            ){
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(10.dp).fillMaxSize()
+            ) {
+
+
+                Icon(
+                    painter = painterResource(R.drawable.swing_icon),
+                    contentDescription = "Swing",
+                    modifier = Modifier.size(48.dp),
+                    tint = if(isSwingON) Color.DarkGray else Color.LightGray,
+
+                    )
+                Text(text = "Swing",
+                    modifier = Modifier,
+                    fontSize = 18.sp,
+                    color = Color.Black
+                )
+            }
+
+        }
+
+
+    }
+}
+
+@Composable
+fun ModeButton(modifier:Modifier, selectedMode:Int, onModeChange:(Int) -> Unit){
+    val modeIcon = when(selectedMode){
+        0 -> R.drawable.mode_ac
+        1 -> R.drawable.mode_fan
+        2-> R.drawable.mode_dual
+        else -> R.drawable.mode_ac
+    }
+    val modeText = when(selectedMode){
+        0-> "Mode: AC"
+        1-> "Mode: Fan"
+        2-> "Mode: Dual"
+        else -> "Mode: AC"
+    }
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(10.dp),
+        onClick = {
+            val mode :Int = (selectedMode+1)%3
+            onModeChange(mode)
+        }
+    ) {
+
+        Box(
+            modifier = Modifier.background(Color.White).fillMaxSize(),
+            contentAlignment = Alignment.Center,
+
+            ){
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(10.dp).fillMaxSize()
+            ) {
+
+
+                Icon(
+                    painter = painterResource(modeIcon),
+                    contentDescription = "Swing",
+                    modifier = Modifier.size(48.dp),
+                    )
+                Text(text = modeText,
+                    modifier = Modifier,
+                    fontSize = 18.sp,
+                    color = Color.Black
+                )
+            }
+
+        }
+
+    }
+}
+
+
+@Composable
+fun TimerButton(modifier: Modifier, timerMode: Int, onTimerModeChange:(Int)-> Unit){
+    val timerIcon = when(timerMode){
+        0 -> R.drawable.timer_off_icon
+        else -> R.drawable.timer_on_icon
+
+    }
+    val timerText = when(timerMode){
+        0-> "Timer: OFF"
+        1-> "Timer: 1h"
+        2-> "Timer: 2h"
+        3-> "Timer: 3h"
+        else -> "Timer: OFF"
+    }
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(10.dp),
+        onClick = {
+            val mode :Int = (timerMode+1)%4
+            onTimerModeChange(mode)
+        }
+    ) {
+
+        Box(
+            modifier = Modifier.background(Color.White).fillMaxSize(),
+            contentAlignment = Alignment.Center,
+
+            ){
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(10.dp).fillMaxSize()
+            ) {
+
+
+                Icon(
+                    painter = painterResource(timerIcon),
+                    contentDescription = "Timer button",
+                    modifier = Modifier.size(48.dp),
+                )
+                Text(text = timerText,
+                    modifier = Modifier,
+                    fontSize = 18.sp,
+                    color = Color.Black
+                )
+            }
+
+        }
+
+    }
+}
+
+
+@Composable
+fun ExitButton(modifier:Modifier){
+    val activity = (LocalContext.current as? Activity)
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(10.dp),
+        onClick = {
+            activity?.finish()
+        }
+    ) {
+
+        Box(
+            modifier = Modifier.background(Color.White).fillMaxSize(),
+            contentAlignment = Alignment.Center,
+
+            ){
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(10.dp).fillMaxSize()
+            ) {
+
+
+                Icon(
+                    painter = painterResource(R.drawable.exit_icon),
+                    contentDescription = "Exit button",
+                    modifier = Modifier.size(48.dp),
+                    )
+                Text(text = "EXIT",
+                    modifier = Modifier,
+                    fontSize = 18.sp,
+                    color = Color.Black
+                )
+            }
+
+        }
+
+
+    }
 }
