@@ -24,6 +24,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val irManager =
+            getSystemService(Context.CONSUMER_IR_SERVICE)
+                    as ConsumerIrManager
+
         //val irManager =
         //    getSystemService(Context.CONSUMER_IR_SERVICE) as ConsumerIrManager
 
@@ -43,10 +47,13 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                    MainScreen(text = "24'c",
                        Modifier.statusBarsPadding()
-                           .navigationBarsPadding())
+                           .navigationBarsPadding(),
+                       irManager
+                   )
                 }
             }
         }
     }
+
 }
 

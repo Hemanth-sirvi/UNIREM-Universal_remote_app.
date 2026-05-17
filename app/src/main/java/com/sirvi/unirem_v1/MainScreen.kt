@@ -1,7 +1,7 @@
 package com.sirvi.unirem_v1
 
 import android.app.Activity
-import android.view.Display
+import android.hardware.ConsumerIrManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,7 +23,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.layout.ModifierInfo
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
@@ -42,15 +40,27 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
+data class CurrentAcState(
+    var isPowerON: Boolean,
+    var temperature: Int,
+    var mode: Int,
+    var isSwingON: Boolean,
+    var timerMode: Int,
+    var speed: Int,
+)
 
 @Composable
-fun MainScreen(text : String = "nope", modifier: Modifier) {
-    var temp:Int by remember { mutableIntStateOf(24) }
-    var isPowerON: Boolean by remember { mutableStateOf(false) }
-    val tempText = if(isPowerON) "$temp 'C" else " --'C"
-    var isSwingON: Boolean by remember { mutableStateOf(false)}
-    var selectedMode: Int by remember { mutableIntStateOf(0) }
-    var timerMode: Int by remember { mutableIntStateOf(0)}
+fun MainScreen(
+    text : String = "nope",
+    modifier: Modifier,
+    irManager: ConsumerIrManager
+
+) {
+    var currentAcState: CurrentAcState by remember { mutableStateOf(CurrentAcState(
+        isPowerON = false, temperature = 24, mode = 0, isSwingON = false, timerMode = 0, speed = 0
+    )) }
+    val temp = currentAcState.temperature
+    val tempText = if(currentAcState.isPowerON) " $temp 'c" else " -- 'c"
     Column(modifier = modifier.padding(10.dp).fillMaxSize()
         //.background(Color.Blue)
         .padding(10.dp),
@@ -61,11 +71,8 @@ fun MainScreen(text : String = "nope", modifier: Modifier) {
         TemperatureScreen(tempText,modifier= Modifier.weight(1f).background(Color.White))
         Spacer(modifier.fillMaxSize(0.2f))
         ButtonLayout(modifier = Modifier.weight(1f).fillMaxSize(),
-            isPowerON = isPowerON, onPowerPressed = {isPowerON = it},
-            tempValue = temp, onTemperatureChangePressed = {temp = it},
-            isSwingON = isSwingON, onSwingPressed = {isSwingON = it},
-            selectedMode = selectedMode, onModeChange = {selectedMode  = it},
-            timerMode = timerMode, onTimerModeChange = {timerMode = it}
+            currentAcState = currentAcState, onCurrentAcStateChange = {currentAcState = it},
+            irManager = irManager
         )
     }
 
@@ -87,18 +94,10 @@ fun TemperatureScreen(temp : String, modifier: Modifier){
             Row(
 
             ) {
-                Text(
-                    "T:",
-                    fontSize = 64.sp,
-                    fontFamily = FontFamily(Font(R.font.dseg7classic, FontWeight.Normal)),
-                    modifier = Modifier.padding(10.dp),
-                    textAlign = TextAlign.Center,
-                    color = Color.Black,
 
-                    )
                 Text(
                     temp,
-                    fontSize = 64.sp,
+                    fontSize = 68.sp,
                     fontFamily = FontFamily(Font(R.font.dseg7classic, FontWeight.Normal)),
                     modifier = Modifier.padding(10.dp),
                     textAlign = TextAlign.Center,
@@ -115,30 +114,27 @@ fun TemperatureScreen(temp : String, modifier: Modifier){
 
 @Composable
 fun ButtonLayout(modifier: Modifier,
-                 isPowerON: Boolean, onPowerPressed: (Boolean) -> Unit,
-                 tempValue:Int, onTemperatureChangePressed:(Int) -> Unit,
-                 isSwingON: Boolean, onSwingPressed:(Boolean) -> Unit,
-                 selectedMode: Int, onModeChange: (Int) -> Unit,
-                 timerMode: Int, onTimerModeChange: (Int) -> Unit,
+                 currentAcState: CurrentAcState, onCurrentAcStateChange:(CurrentAcState)-> Unit,
+                 irManager: ConsumerIrManager
     ){
     Box(modifier= Modifier){
         Row() {
             Column(modifier = Modifier.weight(1f).fillMaxSize()) {
-                PowerButton(modifier = Modifier.weight(1f).fillMaxSize(),isPowerON = isPowerON,onPowerPressed = onPowerPressed)
+                PowerButton(modifier = Modifier.weight(1f).fillMaxSize(), currentAcState = currentAcState,onCurrentAcStateChange = onCurrentAcStateChange, irManager = irManager)
                 Spacer(modifier = Modifier.height(10.dp))
                 ButtonItem(text = "Mascot", modifier = Modifier.weight(2f).fillMaxSize())
             }
             Spacer(modifier= Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                TemperatureButton(modifier = Modifier.weight(1f).fillMaxSize(),tempvalue = tempValue, onTemperatureChangePressed = onTemperatureChangePressed,isPowerON =isPowerON)
+                TemperatureButton(modifier = Modifier.weight(1f).fillMaxSize(),currentAcState = currentAcState, onCurrentAcStateChange = onCurrentAcStateChange, irManager = irManager)
                 Spacer(modifier = Modifier.height(10.dp))
-                ModeButton(modifier = Modifier.weight(1f).fillMaxSize(),selectedMode = selectedMode, onModeChange = onModeChange)
+                ModeButton(modifier = Modifier.weight(1f).fillMaxSize(),currentAcState = currentAcState, onCurrentAcStateChange = onCurrentAcStateChange,irManager = irManager)
             }
             Spacer(modifier= Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                SwingButton(modifier = Modifier.weight(1f).fillMaxSize(), isSwingON = isSwingON, onSwingPressed = onSwingPressed)
+                SwingButton(modifier = Modifier.weight(1f).fillMaxSize(), currentAcState = currentAcState,onCurrentAcStateChange = onCurrentAcStateChange,irManager = irManager)
                 Spacer(modifier = Modifier.height(10.dp))
-                TimerButton(modifier = Modifier.weight(1f).fillMaxSize(), timerMode = timerMode, onTimerModeChange = onTimerModeChange)
+                TimerButton(modifier = Modifier.weight(1f).fillMaxSize(), timerMode = currentAcState.timerMode, onTimerModeChange = {currentAcState.timerMode})
                 Spacer(modifier = Modifier.height(10.dp))
                 ExitButton(modifier = Modifier.weight(1f).fillMaxSize())
 
@@ -192,12 +188,26 @@ fun ButtonItem(modifier: Modifier,text:String){
 }
 
 @Composable
-fun PowerButton(modifier: Modifier, isPowerON: Boolean = false, onPowerPressed:(Boolean)-> Unit){
+fun PowerButton(
+    modifier: Modifier,
+    currentAcState: CurrentAcState,
+    onCurrentAcStateChange: (CurrentAcState) -> Unit,
+    irManager: ConsumerIrManager){
     Card(
         modifier = modifier,
         elevation = CardDefaults.cardElevation(10.dp),
         onClick = {
-            onPowerPressed(!isPowerON)
+            val newAcState = CurrentAcState(
+                isPowerON = !(currentAcState.isPowerON),
+                temperature = currentAcState.temperature,
+                mode = currentAcState.mode,
+                isSwingON = currentAcState.isSwingON,
+                timerMode = currentAcState.timerMode,
+                speed = currentAcState.speed
+            )
+            onCurrentAcStateChange(newAcState)
+            acStateChanged(newAcState,irManager)
+
         }
     ) {
 
@@ -217,7 +227,7 @@ fun PowerButton(modifier: Modifier, isPowerON: Boolean = false, onPowerPressed:(
                     imageVector = Icons.Filled.PowerSettingsNew,
                     contentDescription = "Power",
                     modifier = Modifier.size(48.dp),
-                    tint = if(isPowerON) Color.DarkGray else Color.LightGray,
+                    tint = if(currentAcState.isPowerON) Color.DarkGray else Color.LightGray,
 
                     )
                 Text(text = "Power",
@@ -236,8 +246,9 @@ fun PowerButton(modifier: Modifier, isPowerON: Boolean = false, onPowerPressed:(
 @Composable
 fun TemperatureButton(
         modifier: Modifier,
-        tempvalue: Int, onTemperatureChangePressed: (Int) -> Unit ,
-        isPowerON: Boolean
+        currentAcState: CurrentAcState,
+        onCurrentAcStateChange: (CurrentAcState) -> Unit,
+        irManager: ConsumerIrManager
     ){
     Card(
         modifier = modifier,
@@ -253,8 +264,16 @@ fun TemperatureButton(
             ) {
                 IconButton (
                     onClick = {
-                        val newTemp: Int = if(tempvalue<30 && isPowerON) tempvalue+1 else tempvalue
-                        onTemperatureChangePressed(newTemp)
+                        val newAcState = CurrentAcState(
+                            isPowerON = currentAcState.isPowerON,
+                            temperature = if(currentAcState.temperature<30 && currentAcState.isPowerON) currentAcState.temperature+1 else currentAcState.temperature,
+                            mode = currentAcState.mode,
+                            isSwingON = currentAcState.isSwingON,
+                            timerMode = currentAcState.timerMode,
+                            speed = currentAcState.speed
+                        )
+                        onCurrentAcStateChange(newAcState)
+                        if(currentAcState.isPowerON) acStateChanged(newAcState,irManager)
                     },
                     shape = RectangleShape,
                     modifier = Modifier.weight(3f).fillMaxWidth()
@@ -272,8 +291,16 @@ fun TemperatureButton(
                 )
                 IconButton (
                     onClick = {
-                        val newTemp: Int = if(tempvalue>16 && isPowerON) tempvalue-1 else tempvalue
-                        onTemperatureChangePressed(newTemp)
+                        val newAcState = CurrentAcState(
+                            isPowerON = currentAcState.isPowerON,
+                            temperature = if(currentAcState.temperature>18 && currentAcState.isPowerON) currentAcState.temperature-1 else currentAcState.temperature,
+                            mode = currentAcState.mode,
+                            isSwingON = currentAcState.isSwingON,
+                            timerMode = currentAcState.timerMode,
+                            speed = currentAcState.speed
+                        )
+                        onCurrentAcStateChange(newAcState)
+                        if(currentAcState.isPowerON) acStateChanged(newAcState,irManager)
                     },
                     shape = RectangleShape,
                     modifier = Modifier.weight(3f).fillMaxWidth()
@@ -291,12 +318,26 @@ fun TemperatureButton(
 }
 
 @Composable
-fun SwingButton(modifier: Modifier, isSwingON: Boolean  = false, onSwingPressed: (Boolean) -> Unit){
+fun SwingButton(
+    modifier: Modifier,
+    currentAcState: CurrentAcState,
+    onCurrentAcStateChange: (CurrentAcState) -> Unit,
+    irManager: ConsumerIrManager
+){
     Card(
         modifier = modifier,
         elevation = CardDefaults.cardElevation(10.dp),
         onClick = {
-            onSwingPressed(!isSwingON)
+            val newAcState = CurrentAcState(
+                isPowerON = currentAcState.isPowerON,
+                temperature = currentAcState.temperature,
+                mode = currentAcState.mode,
+                isSwingON = !(currentAcState.isSwingON),
+                timerMode = currentAcState.timerMode,
+                speed = currentAcState.speed
+            )
+            onCurrentAcStateChange(newAcState)
+            acStateChanged(newAcState, irManager = irManager)
         }
     ) {
 
@@ -316,7 +357,7 @@ fun SwingButton(modifier: Modifier, isSwingON: Boolean  = false, onSwingPressed:
                     painter = painterResource(R.drawable.swing_icon),
                     contentDescription = "Swing",
                     modifier = Modifier.size(48.dp),
-                    tint = if(isSwingON) Color.DarkGray else Color.LightGray,
+                    tint = if(currentAcState.isSwingON) Color.DarkGray else Color.LightGray,
 
                     )
                 Text(text = "Swing",
@@ -333,25 +374,39 @@ fun SwingButton(modifier: Modifier, isSwingON: Boolean  = false, onSwingPressed:
 }
 
 @Composable
-fun ModeButton(modifier:Modifier, selectedMode:Int, onModeChange:(Int) -> Unit){
-    val modeIcon = when(selectedMode){
-        0 -> R.drawable.mode_ac
-        1 -> R.drawable.mode_fan
-        2-> R.drawable.mode_dual
-        else -> R.drawable.mode_ac
+fun ModeButton(
+    modifier:Modifier,
+    currentAcState: CurrentAcState,
+    onCurrentAcStateChange: (CurrentAcState) -> Unit,
+    irManager: ConsumerIrManager
+    ){
+    val modeIcon = when(currentAcState.mode){
+        0 -> R.drawable.mode_cool
+        1-> R.drawable.mode_dry
+        2-> R.drawable.mode_fan
+        else -> R.drawable.mode_cool
     }
-    val modeText = when(selectedMode){
-        0-> "Mode: AC"
-        1-> "Mode: Fan"
-        2-> "Mode: Dual"
-        else -> "Mode: AC"
+    val modeText = when(currentAcState.mode){
+        0-> "Mode: Cool"
+        1-> "Mode: Dry"
+        2-> "Mode: Fan"
+        else -> "Mode: Cool"
     }
     Card(
         modifier = modifier,
         elevation = CardDefaults.cardElevation(10.dp),
         onClick = {
-            val mode :Int = (selectedMode+1)%3
-            onModeChange(mode)
+            val mode :Int = (currentAcState.mode+1)%3
+            val newAcState = CurrentAcState(
+                isPowerON = currentAcState.isPowerON,
+                temperature = currentAcState.temperature,
+                mode = mode,
+                isSwingON = currentAcState.isSwingON,
+                timerMode = currentAcState.timerMode,
+                speed = currentAcState.speed
+            )
+            onCurrentAcStateChange(newAcState)
+            acStateChanged(newAcState,irManager)
         }
     ) {
 
@@ -369,7 +424,7 @@ fun ModeButton(modifier:Modifier, selectedMode:Int, onModeChange:(Int) -> Unit){
 
                 Icon(
                     painter = painterResource(modeIcon),
-                    contentDescription = "Swing",
+                    contentDescription = "Mode",
                     modifier = Modifier.size(48.dp),
                     )
                 Text(text = modeText,
@@ -477,4 +532,129 @@ fun ExitButton(modifier:Modifier){
 
 
     }
+}
+
+fun buildVoltasPacket(
+    currentAcState: CurrentAcState
+): ByteArray {
+
+    val data = ByteArray(10)
+
+    // Byte 0 --> Horizontal swing, 0x33 for on and 0x32 for off
+    var b0 = 0x33
+    if(currentAcState.isSwingON) b0 = b0 or 0x32
+    data[0]  = b0.toByte()
+
+    // Byte 1 --> mode + fan speed
+    // (0)Chill mode + auto = 0xE8 | Cool mode + auto = 0xE2   | (1)Dry + Fixed  = 0x84
+    // (0)Chill mode + low = 0x88  | Cool mode + low = 0x82    | (2)Fan + High = 0x21
+    // (0)Chill mode + mid = 0x48  | Cool mode + mid = 0x42
+    // (0)Chill mode + high = 0x28 | Cool mode + high = 0x22
+    var b1 = 0xE8
+    b1 = when((currentAcState.mode*10) + (currentAcState.speed)){
+        0-> 0xE8
+        1-> 0x88
+        2-> 0x48
+        3-> 0x28
+        10,11,12,13-> 0x84
+        20,21,22,23 -> 0x21
+        else -> 0xE8
+    }
+
+    data[1] = b1.toByte()
+
+    // Byte 2 powerON 0x28 powerOff 0x00 / 0x80?
+    var b2 = 0x28
+    if (currentAcState.isPowerON) b2 = b2 or 0x80
+
+    data[2] = b2.toByte()
+
+    // Byte 3
+    // 24C
+    var b3 = 0x12
+    b3 = when(currentAcState.temperature){
+        18-> 0x12
+        19 -> 0x13
+        20 -> 0x14
+        21 -> 0x15
+        22 -> 0x16
+        23 -> 0x17
+        24 -> 0x18
+        25 -> 0x19
+        26 -> 0x1A
+        27 -> 0x1B
+        28 -> 0x1C
+        29 -> 0x1D
+        30 -> 0x1E
+        else -> 0x18
+
+    }
+    data[3] = b3.toByte()
+
+    // Remaining default bytes
+    data[4] = 0x3B
+    data[5] = 0x3B
+    data[6] = 0x3B
+    data[7] = 0x11
+    data[8] = 0x00
+
+    // Checksum
+    var sum = 0
+
+    for (i in 0 until 9) {
+        sum += data[i].toInt() and 0xFF
+    }
+
+    data[9] = (sum.inv() and 0xFF).toByte()
+
+    return data
+}
+
+fun encodeVoltas(data: ByteArray): IntArray {
+
+    val raw = mutableListOf<Int>()
+
+    for (byte in data) {
+
+        for (i in 7 downTo 0) {
+
+            val bit = (byte.toInt() shr i) and 1
+
+            raw.add(1000)
+
+            if (bit == 1)
+                raw.add(2570)
+            else
+                raw.add(580)
+        }
+    }
+
+    // Final stop pulse
+    raw.add(1000)
+
+    return raw.toIntArray()
+}
+
+
+fun sendPower(currentAcState: CurrentAcState, irManager: ConsumerIrManager) {
+
+    val packet = buildVoltasPacket(currentAcState = currentAcState)
+
+    val pattern = encodeVoltas(packet)
+
+    irManager.transmit(
+        38000,
+        pattern
+    )
+}
+
+fun acStateChanged(
+    currentAcState: CurrentAcState,
+    irManager: ConsumerIrManager){
+    val packet = buildVoltasPacket(currentAcState)
+    val pattern = encodeVoltas(packet)
+    irManager.transmit(
+        38000,
+        pattern
+    )
 }
